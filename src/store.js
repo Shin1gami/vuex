@@ -271,6 +271,12 @@ function resetStoreVM (store, state, hot) {
       enumerable: true // for local getters
     })
   })
+  // map namespaced getters - computed object needs to be complete
+  forEachValue(wrappedGetters, (fn, key) => {
+    if (key.includes('/')) {
+      mapNamespacedGetter(store.getters, key, computed[key], computed)
+    }
+  })
 
   // use a Vue instance to store the state tree
   // suppress warnings just in case the user has added
