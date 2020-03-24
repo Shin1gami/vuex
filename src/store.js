@@ -502,6 +502,34 @@ function getNestedState (state, path) {
   return path.reduce((state, key) => state[key], state)
 }
 
+function mapNamespacedGetter (gettersObject, path, getterFunction, computed) {
+  const sections = path.split('/')
+  // If there is a getter registered in the root namespace with the name of the module
+  // don't map the namespaced getters to avoid breaking changes.
+  // A warning should be thrown in this case.
+  if (computed[sections[0]]) {
+    console.warn(
+      `[vuex] "${sections[0]}" module's getters are not available under the dot-notation because there is a getter in the root namespace with the same name ("${sections[0]}").`,
+      `If you want to use the dot-notation rename the "${sections[0]}" root getter or the module.`
+    )
+    return
+  }
+  sections.forEach((section, index) => {
+    // if it's the value AKA the last element of the array
+    if (index === sections.length - 1) {
+      Object.defineProperty(gettersObject, section, {
+        get: getterFunction,
+        enumerable: true
+      })
+    } else {
+      if (!gettersObject[section]) {
+        gettersObject[section] = {}
+      }
+      gettersObject = gettersObject[section]
+    }
+  })
+}
+
 function unifyObjectStyle (type, payload, options) {
   if (isObject(type) && type.type) {
     options = payload
